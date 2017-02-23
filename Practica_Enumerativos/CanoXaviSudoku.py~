@@ -1,0 +1,164 @@
+#Xavi Cano Granada
+
+
+from collections import deque
+import math
+
+#Creo una cola
+cola = deque()
+
+#Funcion que recibe el tablero vacio y nombre del fichero	
+def sudoku(tablero,nombreFichero):
+
+	ficheroSudoku = open(nombreFichero, "r")	
+
+	#Lleno el tablero con los valores del fichero
+	for h in range(9):
+		i = 0
+		textoSudoku = ficheroSudoku.readline()
+		for v in range(9):	
+ 			tablero[h][v] = textoSudoku[i]
+ 			i += 1
+
+	#Lleno la cola
+	for x in range(9):
+ 		for y in range(9):
+ 			if(tablero[x][y] == '.'):
+ 				cola.append(str(x) + str(y))
+	
+
+#Funcion que imprime el tablero
+def imprimeTablero(tablero):
+
+	for h in range(9):
+		for v in range(9):
+			print tablero[h][v],
+		print	
+	
+
+#Funcion que recibe el tablero y mira si el numero se repite en fila,columna y cubo de 3x3
+def satisfact(tablero,h,v):
+	
+	#Si la casilla esta vacia
+	if(tablero[h][v] != '.'):
+		
+		#Miro si el numero se repite en la fila
+		for i in range(9):
+			if(i != v):
+				if(tablero[h][i] == tablero[h][v]):
+					return True
+
+
+		#Miro si el numero se repite en la columna
+		for i in range(9):
+			if(i != h):
+				if(tablero[i][v] == tablero[h][v]):
+					return True
+
+		#Miro si el numero se repite en el cubo de 3x3
+		#Divido la coordenada del tablero entre 3, me quedo su parte entera
+		#y la multiplico por 3, de esta forma siempre se la casilla inicial
+		#al subcubo de 3x3 que pertenecen esas coordenandas
+		cuboH = int(math.floor(h/3)*3)
+		cuboV = int(math.floor(v/3)*3)
+
+		for x in range(cuboH, cuboH+3):
+			for y in range(cuboV, cuboV+3):
+				if( x != h and y != v):
+					if(tablero[x][y] == tablero[h][v]):
+						return True
+	return False
+
+
+#Funcion que recibe el tablero y mira si el tablero esta completo
+def estaTableroLleno(tablero):
+
+	for h in range(9):
+		for v in range(9):
+			if(tablero[h][v] == '.'):
+				return False
+	return True
+
+
+#Funcion que implementa backtracking y intenta resolver el sudoku
+def resuelveSudoku(tablero):
+
+	OK = True
+	ERROR = False
+	
+	#Si el tablero esta lleno, devuelvo OK, es decir, finalizo
+	if(estaTableroLleno(tablero)):
+		return OK
+	
+	#Sino esta vacio
+	else:
+		siguienteVacioTablero = cola.popleft()
+		tableroH = siguienteVacioTablero[0]
+		tableroV = siguienteVacioTablero[1]
+
+		#Para todos los valores del 1 al 9
+		for i in range(9):
+			valor = i+1
+			tablero[int(tableroH)][int(tableroV)] = str(valor)
+			
+			if(satisfact(tablero,int(tableroH), int(tableroV))):
+				tablero[int(tableroH)][int(tableroV)] = '.'
+			else:
+				if(resuelveSudoku(tablero) == OK):
+					return OK
+				else:
+					tablero[int(tableroH)][int(tableroV)] = '.'
+					
+		cola.appendleft(siguienteVacioTablero)
+		return ERROR
+
+
+#Funcion principal
+def main():
+	
+	#Creo el tablero del sudoku
+	tablero = [['.' for h in range(9)] for v in range(9)]
+	
+	print "\n*** Sudoku Inicial ***\n"
+	sudoku(tablero,"sudoku1.txt")
+	imprimeTablero(tablero)
+	resuelveSudoku(tablero)
+	print "\n*** Sudoku Final ***\n"
+	imprimeTablero(tablero)
+	
+main()
+
+
+'''
+                      Analisis de eficiencia
+                      ----------------------
+                      
+* Complejidad funcion sudoku(): 
+
+1+(n(1+1+n(1+1)))+n(n(1(1))) = 1+n^2+n^2 = 1 + n^4
+
+* Complejidad funcion imprimeTablero(): 
+
+n(n(1)+1) = n^4
+
+* Complejidad funcion satisfact():
+
+1(n(1(1(1)))+n(1(1(1)))+1+1+n(n(1(1(1)))))+1 = 2n + n^2 + 1
+
+* Complejidad funcion estaTableroLleno():
+
+n(n(1(1)))+1 = n^2 + 1
+
+* Complejidad funcion resuelveSudoku():
+
+1+1+1(1)+1(1+1+1+n(1+1+(1(1)+1(1(1)+1(1))))+1+1) = n
+
+* Complejidad funcion main():
+
+n^2+1+1+1+1+1+1 = n^2
+
+* COMPLEJIDAD TOTAL: 
+
+(1 + n^4) + (n^4) + (2n + n^2 + 1) + (n^2 + 1) + (n) + (n^2) = 2n^4 + 3n^2 + 3n + 3
+
+'''
